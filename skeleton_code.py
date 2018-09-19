@@ -4,6 +4,7 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 from sklearn.cross_validation import train_test_split
+from sklearn.preprocessing import MinMaxScaler
 
 ### Assignment Owner: Tian Wang
 
@@ -25,6 +26,12 @@ def feature_normalization(train, test):
 
     """
     # TODO
+    scaler = MinMaxScaler()
+    scaler.fit(train)
+    train_normalized = scaler.transform(train)
+    test_normalized = scalar.transform(test)
+    return train_normalized, test_normalized
+    
 
 
 ########################################
