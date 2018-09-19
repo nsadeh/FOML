@@ -5,6 +5,7 @@ import sys
 import matplotlib.pyplot as plt
 from sklearn.cross_validation import train_test_split
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.feature_selection import VarianceThreshold
 
 ### Assignment Owner: Tian Wang
 
@@ -26,6 +27,12 @@ def feature_normalization(train, test):
 
     """
     # TODO
+    # remove zero variance features
+    selector = VarianceThreshold()
+    train = selector.fit_transform(train)
+    test = selector.transform(test)
+    
+    # rescale with min-max scaling
     scaler = MinMaxScaler()
     scaler.fit(train)
     train_normalized = scaler.transform(train)
