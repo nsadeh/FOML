@@ -13,6 +13,19 @@ from sklearn.feature_selection import VarianceThreshold
 #### Normalization
 
 
+def test_train_split(X, y, test_size = 0.2):
+    try: assert X.shape[0] == y.shape[0]
+    except AssertionError:
+        print('check X and y are numpy object with equal num rows')
+        return
+    train_size = round((1 - test_size) * len(y))
+    test_size = len(y) - train_size
+    random_arr = np.random.permutation(len(y))
+    train_id = random_arr[:train_size]
+    test_id = random_arr[train_size:]
+    return X[train_id,:], X[test_id,:], y[train_id], y[test_id]
+
+
 def feature_normalization(train, test):
     """Rescale the data so that each feature in the training set is in
     the interval [0,1], and apply the same transformations to the test
@@ -36,7 +49,7 @@ def feature_normalization(train, test):
     scaler = MinMaxScaler()
     scaler.fit(train)
     train_normalized = scaler.transform(train)
-    test_normalized = scalar.transform(test)
+    test_normalized = scaler.transform(test)
     return train_normalized, test_normalized
     
 
@@ -79,7 +92,8 @@ def compute_square_loss_gradient(X, y, theta):
         grad - gradient vector, 1D numpy array of size (num_features)
     """
     #TODO
-    z = np.transpose(np.matmul(Z, theta) - y)
+    m = len(y)
+    z = np.transpose(np.matmul(X, theta) - y)
     loss_grad = (2 / m) * np.matmul(z, X)
     return loss_grad
 
@@ -124,8 +138,16 @@ def grad_checker(X, y, theta, epsilon=0.01, tolerance=1e-4):
     """
     true_gradient = compute_square_loss_gradient(X, y, theta) #the true gradient
     num_features = theta.shape[0]
-    approx_grad = np.zeros(num_features) #Initialize the gradient we approximate
+    #approx_grad = np.zeros(num_features) #Initialize the gradient we approximate
     #TODO
+    limit = lambda h: (compute_square_loss(X, y, theta + epsilon * h)
+                            - compute_square_loss(X, y, theta - epsilon * h)) / (2 * epsilon)
+    unit_vectors = [np.array([1 if i == index else 0 for i in range(num_features)])
+                    for index in range(num_features)]
+    approx_grad = list(map(limit, unit_vectors))
+    norm = np.linalg.norm(true_gradient - np.array(approx_grad), 2)
+    return norm <= tolerance
+
 
 #################################################
 ### Generic Gradient Checker
@@ -265,6 +287,25 @@ def main():
     X_test = np.hstack((X_test, np.ones((X_test.shape[0], 1)))) # Add bias term
 
     # TODO
+    #risk =
 
 if __name__ == "__main__":
-    main()
+    #main()
+
+    df = pd.read_csv('C:\\Users\\nsadeh\\Documents\\hw1\\hw1-sgd\\data.csv', delimiter=',')
+    X = df.values[:,:-1]
+    y = df.values[:,-1]
+    print('Split into Train and Test')
+    X_train, X_test, y_train, y_test = test_train_split(X, y)
+    print(X_train.shape)
+    print(X_test.shape)
+
+    print("Scaling all to [0, 1]")
+    X_train, X_test = feature_normalization(X_train, X_test)
+    X_train = np.hstack((X_train, np.ones((X_train.shape[0], 1))))  # Add bias term
+    X_test = np.hstack((X_test, np.ones((X_test.shape[0], 1)))) # Add bias term
+
+    theta = np.random.rand(X.shape[1] + 1)
+
+    print(compute_square_loss(X_train, y_train, theta))
+    print(grad_checker(X_train, y_train, theta, epsilon=0.0001))
